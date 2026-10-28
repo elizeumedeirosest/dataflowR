@@ -499,7 +499,7 @@ criar_server_dataflow <- function(dados_iniciais, nome_objeto_original = "dados"
     })
 
     # =========================================================================
-    # MODAL 8: VISUALIZAR CÓDIGO DPLYR EM TEMPO REAL
+    # MODAL 8: VISUALIZAR CÓDIGO DPLYR, RESUMO E FLUXOGRAMA
     # =========================================================================
     shiny::observeEvent(input$btn_ver_codigo, {
       script_gerado <- gerar_script_dplyr(
@@ -508,15 +508,91 @@ criar_server_dataflow <- function(dados_iniciais, nome_objeto_original = "dados"
         atribuir_a = paste0(nome_objeto_original, "_tratado")
       )
 
+      # 1. Cards de Histórico para a aba de Resumo
+      ops <- valores$operacoes
+      cards_historico <- if (length(ops) == 0) {
+        htmltools::tags$div(class = "text-muted p-3", "Nenhuma operação registrada até o momento.")
+      } else {
+        lapply(seq_along(ops), function(i) {
+          op <- ops[[i]]
+          det <- op$detalhes
+          dif_str <- ""
+          if (!is.null(det$linhas_antes) && !is.null(det$linhas_depois)) {
+            dif <- det$linhas_depois - det$linhas_antes
+            dif_str <- paste0(" | Linhas: ", det$linhas_antes, " ──> ", det$linhas_depois,
+                              if (dif != 0) paste0(" (", ifelse(dif > 0, "+", ""), dif, ")") else "")
+          }
+          htmltools::tags$div(
+            class = "history-card",
+            htmltools::tags$div(
+              class = "d-flex justify-content-between align-items-center",
+              htmltools::tags$strong(paste0(i, ". ", op$titulo)),
+              htmltools::tags$span(class = "badge bg-primary text-white", op$tipo)
+            ),
+            if (nzchar(op$comentario)) htmltools::tags$div(class = "small text-muted mt-1", op$comentario),
+            if (nzchar(dif_str)) htmltools::tags$div(class = "small text-secondary fw-semibold mt-1", dif_str)
+          )
+        })
+      }
+
+      # 2. Código Mermaid para o Fluxograma
+      linhas_mermaid <- c("graph TD", "  classDef box fill:#f8fafc,stroke:#0284c7,stroke-width:2px,color:#0f172a,rx:8,ry:8;")
+      linhas_mermaid <- c(linhas_mermaid, paste0('  N0["<b>Dados Brutos</b><br>', valores$dim_original$linhas, ' linhas | ', valores$dim_original$colunas, ' cols"]'))
+      ultimo_node <- "N0"
+      if (length(ops) > 0) {
+        for (i in seq_along(ops)) {
+          op <- ops[[i]]
+          node_id <- paste0("N", i)
+          linhas_mermaid <- c(linhas_mermaid, paste0('  ', node_id, '["<b>', i, '. ', op$titulo, '</b>"]'))
+          linhas_mermaid <- c(linhas_mermaid, paste0("  ", ultimo_node, " --> ", node_id))
+          ultimo_node <- node_id
+        }
+      }
+      linhas_mermaid <- c(linhas_mermaid, paste0('  N_FINAL["<b>Base Atual</b><br>', nrow(valores$dados), ' linhas | ', ncol(valores$dados), ' cols"]'))
+      linhas_mermaid <- c(linhas_mermaid, paste0("  ", ultimo_node, " --> N_FINAL"))
+      mermaid_str <- paste(linhas_mermaid, collapse = "\n")
+
       shiny::showModal(shiny::modalDialog(
-        title = htmltools::tagList(shiny::icon("code", class = "text-primary me-2"), "Código R Reproduzível (dplyr)"),
+        title = htmltools::tagList(shiny::icon("code", class = "text-primary me-2"), "Auditoria, Código dplyr & Linhagem"),
         size = "l",
         easyClose = TRUE,
         footer = htmltools::tagList(
           shiny::modalButton("Fechar")
         ),
-        htmltools::tags$p(class = "text-muted small", "Este script reproduz com precisão matemática cada alteração realizada visualmente nesta sessão."),
-        htmltools::tags$pre(class = "code-output", script_gerado)
+        shiny::tabsetPanel(
+          shiny::tabPanel(
+            title = htmltools::tagList(shiny::icon("terminal", class = "me-1"), "Código R (dplyr)"),
+            htmltools::tags$div(
+              class = "d-flex justify-content-between align-items-center my-3",
+              htmltools::tags$span(class = "text-muted small", "Script reproduzível para execução direta no R:"),
+              htmltools::tags$button(
+                id = "btn_copiar_clipboard",
+                class = "btn btn-outline-primary toolbar-btn fw-bold",
+                onclick = "copiarCodigoDataflow();",
+                htmltools::tagList(shiny::icon("copy", class = "me-1"), "Copiar Código")
+              )
+            ),
+            htmltools::tags$pre(class = "code-output", id = "texto_codigo_dplyr", script_gerado)
+          ),
+          shiny::tabPanel(
+            title = htmltools::tagList(shiny::icon("list-check", class = "me-1"), "Resumo da Linhagem"),
+            htmltools::tags$br(),
+            htmltools::tags$div(
+              class = "p-2",
+              cards_historico
+            )
+          ),
+          shiny::tabPanel(
+            title = htmltools::tagList(shiny::icon("diagram-project", class = "me-1"), "Fluxograma Visual"),
+            htmltools::tags$br(),
+            htmltools::tags$div(
+              class = "mermaid text-center",
+              style = "margin: 0 auto; max-width: 700px;",
+              htmltools::HTML(mermaid_str)
+            ),
+            htmltools::tags$script("if (typeof mermaid !== 'undefined') { mermaid.run(); }")
+          )
+        )
       ))
     })
 

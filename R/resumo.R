@@ -4,6 +4,34 @@
 #' @name resumo
 NULL
 
+#' Extrair e Exibir Código dplyr Reproduzível
+#'
+#' Imprime no console o script dplyr completo e comentado que reproduz com precisão
+#' todas as transformações efetuadas na sessão do dataflow.
+#'
+#' @param dados Objeto da classe \code{dataflow} retornado pela função \code{dataflow()}.
+#' @return Retorna o texto do script invisivelmente.
+#' @export
+#' @examples
+#' \dontrun{
+#' dados_limpos <- dataflow(mtcars)
+#' codigo_dataflow(dados_limpos)
+#' }
+codigo_dataflow <- function(dados) {
+  if (!inherits(dados, "dataflow")) {
+    cli::cli_abort("O objeto fornecido nao e da classe {.cls dataflow}.")
+  }
+
+  cod <- attr(dados, "codigo_dplyr")
+  if (is.null(cod) || !nzchar(cod)) {
+    cli::cli_alert_warning("Nenhum codigo gerado para este objeto.")
+    return(invisible(NULL))
+  }
+
+  cat(cod)
+  invisible(cod)
+}
+
 #' Resumo da Linhagem do dataflow
 #'
 #' Exibe no console uma visão detalhada e auditável de cada etapa realizada

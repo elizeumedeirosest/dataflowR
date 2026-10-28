@@ -14,7 +14,7 @@
 
 <p align="center">
   <b>Uma interface visual e interativa para edição, faxina e engenharia de dados em R.</b><br>
-  Edite células diretamente em planilha interativa, aplique transformações e filtros em português, gere scripts reproduzíveis comentados passo a passo e visualize o fluxograma completo de alterações.
+  Edite células diretamente em planilha interativa, aplique transformações e filtros em português, copie scripts reproduzíveis com 1 clique e visualize a linhagem e o fluxograma completo de alterações.
 </p>
 
 </div>
@@ -25,10 +25,10 @@
 
 O **`dataflowR`** une a simplicidade visual de uma planilha eletrônica interativa com o rigor da ciência de dados reproduzível:
 
-1. **Edição Direta e Visual**: Altere valores de células, renomeie colunas, adicione ou remova linhas e filtre dados visualmente em uma interface moderna.
-2. **Engenharia de Atributos Guiada**: Conversão inteligente de tipos, imputação de valores ausentes (`NA`), padronização, codificação de categorias e criação de novas colunas.
-3. **Geração Automática de Código**: Cada clique e modificação na interface produz código R limpo (`dplyr` / `tidyverse`), totalmente comentado em português para que seu pipeline seja 100% auditável e reproduzível.
-4. **Linhagem e Fluxograma (*Dataflow Tracker*)**: O objeto retornado por `dataflow()` armazena todo o histórico de modificações, permitindo inspecionar o fluxo completo no console com `resumo_dataflow()` ou gerar fluxogramas visuais com `grafico_dataflow()`.
+1. **Edição Direta e Visual**: Altere valores de células com duplo clique, renomeie colunas, adicione ou remova linhas e filtre dados visualmente em uma interface moderna.
+2. **Engenharia de Atributos Guiada**: Conversão inteligente de tipos, fragmentador automático de datas, imputação de dados ausentes (`NA`) univariada e por grupo, além de substituição de valores sentinela.
+3. **Geração Automática de Código na Interface**: Cada clique e modificação produz código R limpo (`dplyr` / `tidyverse`), comentado em português. O código pode ser copiado diretamente para a área de transferência com um único clique no botão **"Copiar Código"** dentro da própria interface (estilo *esquisse*).
+4. **Linhagem e Fluxograma (*Dataflow Tracker*)**: Visualize o histórico de alterações e o fluxograma visual diretamente na interface antes de salvar, ou inspecione no console via `resumo_dataflow()` e `codigo_dataflow()`.
 
 ---
 
@@ -59,15 +59,20 @@ dados_limpos <- dataflow(mtcars)
 
 Ou acesse diretamente pelo menu **Addins** do RStudio: `dataflowR -> Editor Visual de Dados`.
 
-### 2. Resumo da Linhagem e Auditoria de Alterações
+*Dentro da interface, use o botão **"Código & Linhagem"** para copiar o script `dplyr` gerado ou visualizar o fluxograma e a auditoria das etapas.*
 
-Acompanhe cada etapa realizada nos dados com o histórico de transformações:
+### 2. Acesso Direto via Console (Funções Dedicadas)
+
+Se preferir inspecionar o código e a auditoria via console após fechar a interface:
 
 ```r
-# Exibir o resumo do fluxo no console com formatação rica
+# 1. Imprimir o script dplyr reproduzível gerado
+codigo_dataflow(dados_limpos)
+
+# 2. Exibir o resumo estruturado da linhagem de transformações
 resumo_dataflow(dados_limpos)
 
-# Gerar o fluxograma visual das transformações
+# 3. Gerar o fluxograma visual interativo
 grafico_dataflow(dados_limpos)
 ```
 

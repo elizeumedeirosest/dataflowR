@@ -18,8 +18,28 @@ criar_ui_dataflow <- function() {
     ),
     title = "dataflowR - Editor Visual de Dados",
 
-    # Estilos customizados modernos (Apple-style / Clean)
+    # Estilos customizados e Scripts para Copiar Código e Diagrama Mermaid
     htmltools::tags$head(
+      htmltools::tags$script(src = "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"),
+      htmltools::tags$script(htmltools::HTML("
+        function copiarCodigoDataflow() {
+          var el = document.getElementById('texto_codigo_dplyr');
+          if (!el) return;
+          var texto = el.innerText || el.textContent;
+          navigator.clipboard.writeText(texto).then(function() {
+            var btn = document.getElementById('btn_copiar_clipboard');
+            if (btn) {
+              var original = btn.innerHTML;
+              btn.innerHTML = '<i class=\"fa-solid fa-check me-1\"></i> Copiado com Sucesso!';
+              btn.className = 'btn btn-success toolbar-btn fw-bold';
+              setTimeout(function() {
+                btn.innerHTML = original;
+                btn.className = 'btn btn-outline-primary toolbar-btn fw-bold';
+              }, 2500);
+            }
+          });
+        }
+      ")),
       htmltools::tags$style(htmltools::HTML("
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .brand-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
@@ -59,12 +79,21 @@ criar_ui_dataflow <- function() {
         pre.code-output {
           background-color: #0f172a;
           color: #f8fafc;
-          padding: 16px;
-          border-radius: 8px;
+          padding: 18px;
+          border-radius: 10px;
           font-family: 'Fira Code', 'Consolas', monospace;
-          font-size: 0.85rem;
-          max-height: 400px;
+          font-size: 0.88rem;
+          line-height: 1.5;
+          max-height: 450px;
           overflow-y: auto;
+          white-space: pre-wrap;
+        }
+        .history-card {
+          background-color: #f8fafc;
+          border-left: 4px solid #0071e3;
+          border-radius: 6px;
+          padding: 10px 14px;
+          margin-bottom: 10px;
         }
       "))
     ),
@@ -84,7 +113,7 @@ criar_ui_dataflow <- function() {
       ),
       htmltools::tags$div(
         class = "d-flex align-items-center",
-        shiny::actionButton("btn_ver_codigo", "Ver Código dplyr", class = "btn btn-outline-primary toolbar-btn me-2", icon = shiny::icon("code")),
+        shiny::actionButton("btn_ver_codigo", "Código & Linhagem", class = "btn btn-outline-primary toolbar-btn me-2 fw-semibold", icon = shiny::icon("code")),
         shiny::actionButton("btn_desfazer", "Desfazer Última", class = "btn btn-outline-secondary toolbar-btn me-2", icon = shiny::icon("rotate-left")),
         shiny::actionButton("btn_cancelar", "Cancelar", class = "btn btn-light toolbar-btn me-2 text-secondary"),
         shiny::actionButton("btn_concluir", "Concluir e Retornar", class = "btn btn-primary toolbar-btn fw-bold px-3", icon = shiny::icon("check"))
