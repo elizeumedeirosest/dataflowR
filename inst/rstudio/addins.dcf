@@ -1,0 +1,4 @@
+Name: Editor Visual de Dados (dataflowR)
+Description: Abre a interface interativa do dataflowR para edicao, faxina e engenharia de dados.
+Binding: dataflow_addin
+Interactive: true
