@@ -1,6 +1,5 @@
 #' @title Configuração e Integração com Handsontable
-#' @description Renderização e captura de alterações na planilha interativa
-#'   com suporte a menu de contexto em português e auto-ajuste de colunas.
+#' @description Renderização e captura de alterações na planilha interativa.
 #' @name planilha
 #' @keywords internal
 NULL
@@ -13,38 +12,48 @@ NULL
 #' @keywords internal
 criar_tabela_interativa <- function(dados, altura = 550) {
   if (is.null(dados) || nrow(dados) == 0) {
-    return(rhandsontable::rhandsontable(data.frame(Aviso = "Tabela vazia")))
+    return(suppressWarnings(
+      rhandsontable::rhandsontable(data.frame(Aviso = "Tabela vazia"))
+    ))
   }
 
-  hot <- rhandsontable::rhandsontable(
-    dados,
-    height = altura,
-    rowHeaders = TRUE,
-    colHeaders = names(dados),
-    useTypes = TRUE,
-    stretchH = "all",
-    manualColumnResize = TRUE,
-    manualRowResize = TRUE,
-    highlightRow = TRUE,
-    highlightCol = TRUE
-  )
-
-  # Configura menu de contexto em português
-  menu_pt <- list(
-    items = list(
-      row_above = list(name = "Inserir linha acima"),
-      row_below = list(name = "Inserir linha abaixo"),
-      hsep1 = "---------",
-      remove_row = list(name = "Remover linha(s) selecionada(s)"),
-      hsep2 = "---------",
-      undo = list(name = "Desfazer"),
-      redo = list(name = "Refazer"),
-      hsep3 = "---------",
-      make_read_only = list(name = "Alternar somente leitura")
+  # useTypes = FALSE: evita warning de hot_context_menu e permite operações de colunas
+  hot <- suppressWarnings(
+    rhandsontable::rhandsontable(
+      dados,
+      height  = altura,
+      useTypes = FALSE,
+      stretchH = "all",
+      manualColumnResize = TRUE,
+      manualRowResize    = TRUE,
+      highlightRow       = TRUE,
+      highlightCol       = TRUE,
+      colHeaders         = names(dados)
     )
   )
 
-  hot <- rhandsontable::hot_context_menu(hot, customOpts = menu_pt)
+  # Ordenação por coluna com seta indicadora (Handsontable.js nativo)
+  hot <- suppressWarnings(
+    rhandsontable::hot_table(hot, columnSorting = TRUE, sortIndicator = TRUE)
+  )
+
+  # Menu de contexto em português (sem add/remove coluna — temos botões próprios)
+  menu_pt <- list(
+    items = list(
+      row_above  = list(name = "Inserir linha acima"),
+      row_below  = list(name = "Inserir linha abaixo"),
+      hsep1      = "---------",
+      remove_row = list(name = "Remover linha(s) selecionada(s)"),
+      hsep2      = "---------",
+      undo       = list(name = "Desfazer"),
+      redo       = list(name = "Refazer")
+    )
+  )
+
+  hot <- suppressWarnings(
+    rhandsontable::hot_context_menu(hot, customOpts = menu_pt)
+  )
+
   hot
 }
 
@@ -66,11 +75,11 @@ detectar_edicoes_celulas <- function(antigo, novo) {
 
   for (col in cols_comuns) {
     v_antigo <- antigo[[col]]
-    v_novo <- novo[[col]]
-
-    # Compara considerando NAs
-    diferencas <- which((is.na(v_antigo) != is.na(v_novo)) | (!is.na(v_antigo) & !is.na(v_novo) & v_antigo != v_novo))
-
+    v_novo   <- novo[[col]]
+    diferencas <- which(
+      (is.na(v_antigo) != is.na(v_novo)) |
+      (!is.na(v_antigo) & !is.na(v_novo) & v_antigo != v_novo)
+    )
     if (length(diferencas) > 0) {
       modificacoes <- modificacoes + length(diferencas)
       detalhes_edicoes <- c(detalhes_edicoes, paste0(col, " (", length(diferencas), " cél.)"))
@@ -78,9 +87,5 @@ detectar_edicoes_celulas <- function(antigo, novo) {
   }
 
   if (modificacoes == 0) return(NULL)
-
-  list(
-    total_modificacoes = modificacoes,
-    resumo = paste(detalhes_edicoes, collapse = ", ")
-  )
+  list(total_modificacoes = modificacoes, resumo = paste(detalhes_edicoes, collapse = ", "))
 }

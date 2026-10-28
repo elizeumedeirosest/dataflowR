@@ -51,18 +51,28 @@ dataflow <- function(dados,
     "pane" = shiny::paneViewer()
   )
 
-  ui <- criar_ui_dataflow()
+  ui     <- criar_ui_dataflow()
   server <- criar_server_dataflow(dados_iniciais = dados, nome_objeto_original = nome_obj)
 
   # Executa como Shiny Gadget
-  resultado <- shiny::runGadget(ui, server, viewer = gadget_viewer, stopOnCancel = FALSE)
+  resultado <- suppressWarnings(
+    shiny::runGadget(ui, server, viewer = gadget_viewer, stopOnCancel = FALSE)
+  )
+
+  # Se o usuário clicou em "Expandir" → reabre em tela cheia no navegador
+  if (identical(resultado, "__expandir_navegador__")) {
+    cli::cli_alert_info("Reabrindo em tela cheia no navegador...")
+    resultado <- suppressWarnings(
+      shiny::runGadget(ui, server, viewer = shiny::browserViewer(), stopOnCancel = FALSE)
+    )
+  }
 
   if (is.null(resultado)) {
     cli::cli_alert_info("Edição cancelada pelo usuário. Os dados não foram modificados.")
     return(invisible(dados))
   }
 
-  cli::cli_alert_success("Dados processados com sucesso! Objeto retornado com classe {.cls dataflow}.")
+  cli::cli_alert_success("Dados processados com sucesso!")
   resultado
 }
 

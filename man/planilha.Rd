@@ -4,7 +4,6 @@
 \alias{planilha}
 \title{Configuração e Integração com Handsontable}
 \description{
-Renderização e captura de alterações na planilha interativa
-com suporte a menu de contexto em português e auto-ajuste de colunas.
+Renderização e captura de alterações na planilha interativa.
 }
 \keyword{internal}

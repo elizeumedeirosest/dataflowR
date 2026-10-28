@@ -11,130 +11,177 @@ NULL
 criar_ui_dataflow <- function() {
   bslib::page_fillable(
     theme = bslib::bs_theme(
-      version = 5,
+      version    = 5,
       bootswatch = "cosmo",
-      primary = "#0071e3",
-      base_font = bslib::font_google("Inter")
+      primary    = "#0071e3",
+      bg         = "#ffffff",
+      fg         = "#0f172a",
+      base_font  = bslib::font_google("Inter")
     ),
-    title = "dataflowR - Editor Visual de Dados",
+    title = "dataflowR — Editor Visual de Dados",
 
-    # Estilos customizados e Scripts para Copiar Código e Diagrama Mermaid
+    # ── Cabeça: fontes, estilos e scripts ──────────────────────────────────────
     htmltools::tags$head(
-      htmltools::tags$script(src = "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"),
+      # Mermaid para o fluxograma
+      htmltools::tags$script(src = "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"),
+      htmltools::tags$script(htmltools::HTML("
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+      ")),
+      # Copiar código para clipboard
       htmltools::tags$script(htmltools::HTML("
         function copiarCodigoDataflow() {
           var el = document.getElementById('texto_codigo_dplyr');
           if (!el) return;
-          var texto = el.innerText || el.textContent;
-          navigator.clipboard.writeText(texto).then(function() {
+          navigator.clipboard.writeText(el.innerText || el.textContent).then(function() {
             var btn = document.getElementById('btn_copiar_clipboard');
-            if (btn) {
-              var original = btn.innerHTML;
-              btn.innerHTML = '<i class=\"fa-solid fa-check me-1\"></i> Copiado com Sucesso!';
-              btn.className = 'btn btn-success toolbar-btn fw-bold';
-              setTimeout(function() {
-                btn.innerHTML = original;
-                btn.className = 'btn btn-outline-primary toolbar-btn fw-bold';
-              }, 2500);
-            }
+            if (!btn) return;
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class=\"fa fa-check me-1\"></i> Copiado!';
+            btn.className = btn.className.replace('btn-outline-primary','btn-success');
+            setTimeout(function() {
+              btn.innerHTML = orig;
+              btn.className = btn.className.replace('btn-success','btn-outline-primary');
+            }, 2500);
           });
         }
       ")),
+      # Duplo clique no cabeçalho da coluna → renomear (event delegation)
+      htmltools::tags$script(htmltools::HTML("
+        $(document).on('dblclick', '#tabela_dados .colHeader', function() {
+          var span  = $(this);
+          var th    = span.closest('th');
+          var idx   = th.index() - 1; // -1 pelo cabeçalho de linhas
+          var nome  = span.text().trim();
+          var novo  = window.prompt('Renomear coluna:', nome);
+          if (novo && novo.trim() !== '' && novo.trim() !== nome) {
+            Shiny.setInputValue('renomear_header_col', {
+              col_idx   : idx,
+              nome_atual: nome,
+              novo_nome : novo.trim()
+            }, { priority: 'event' });
+          }
+        });
+      ")),
+      # Estilos
       htmltools::tags$style(htmltools::HTML("
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .brand-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.5px; }
-        .brand-dark { color: #0f172a; }
-        .brand-blue { color: #0071e3; }
-        .toolbar-btn {
-          border-radius: 8px;
-          font-weight: 500;
-          font-size: 0.88rem;
-          padding: 6px 14px;
-          margin-right: 6px;
-          margin-bottom: 6px;
-          transition: all 0.2s ease;
-        }
-        .toolbar-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        /* ─ Tipografia / Paleta ─ */
+        body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+
+        /* ─ Marca ─ */
+        .df-brand { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.6px; line-height: 1; white-space: nowrap; }
+        .df-brand-dark { color: #0f172a; }
+        .df-brand-blue { color: #0071e3; }
+
+        /* ─ Métricas ─ */
         .metric-badge {
-          background-color: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 6px 14px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: #475569;
-          margin-right: 8px;
-          box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+          display: inline-flex; align-items: center; gap: 4px;
+          background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+          padding: 4px 12px; font-size: 0.83rem; font-weight: 600;
+          color: #475569; margin-right: 6px;
+          box-shadow: 0 1px 2px rgba(0,0,0,.05);
         }
         .metric-val { color: #0071e3; font-weight: 700; }
+
+        /* ─ Botões da barra ─ */
+        .toolbar-btn {
+          border-radius: 8px; font-weight: 500; font-size: 0.85rem;
+          padding: 5px 13px; margin-right: 5px; margin-bottom: 5px;
+          transition: all .18s ease;
+        }
+        .toolbar-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,.1); }
+
+        /* ─ Grid / Tabela ─ */
         .grid-card {
-          background: #ffffff;
-          border-radius: 12px;
+          background: #fff; border-radius: 12px;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-          padding: 12px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,.05); padding: 10px;
         }
-        .handsontable td { font-size: 13px; }
-        .handsontable th { font-weight: 600; background-color: #f1f5f9; color: #334155; }
+        .handsontable td  { font-size: 13px; }
+        .handsontable th  { font-weight: 600; background: #f1f5f9 !important; color: #334155; cursor: pointer; }
+        .handsontable .colHeader { cursor: pointer; user-select: none; }
+
+        /* ─ Modal: forçar fundo branco / borda neutra ─ */
+        .modal-content  { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 20px 60px rgba(0,0,0,.15) !important; }
+        .modal-header   { background: #ffffff !important; border-bottom: 1px solid #e2e8f0; }
+        .modal-footer   { background: #ffffff !important; border-top: 1px solid #e2e8f0; }
+        .modal-body     { background: #ffffff !important; }
+
+        /* ─ Código ─ */
         pre.code-output {
-          background-color: #0f172a;
-          color: #f8fafc;
-          padding: 18px;
-          border-radius: 10px;
-          font-family: 'Fira Code', 'Consolas', monospace;
-          font-size: 0.88rem;
-          line-height: 1.5;
-          max-height: 450px;
-          overflow-y: auto;
-          white-space: pre-wrap;
+          background: #0f172a; color: #f8fafc;
+          padding: 16px; border-radius: 10px;
+          font-family: 'Fira Code', Consolas, monospace;
+          font-size: .87rem; line-height: 1.55;
+          max-height: 440px; overflow-y: auto; white-space: pre-wrap;
         }
+
+        /* ─ Cards de histórico ─ */
         .history-card {
-          background-color: #f8fafc;
-          border-left: 4px solid #0071e3;
-          border-radius: 6px;
-          padding: 10px 14px;
-          margin-bottom: 10px;
+          background: #f8fafc; border-left: 4px solid #0071e3;
+          border-radius: 6px; padding: 10px 14px; margin-bottom: 10px;
         }
+
+        /* ─ Mermaid ─ */
+        .mermaid { width: 100%; }
       "))
     ),
 
-    # 1. Cabeçalho Superior
+    # ── 1. Cabeçalho Superior ────────────────────────────────────────────────
     htmltools::tags$div(
       class = "d-flex justify-content-between align-items-center py-2 px-3 mb-2 bg-white border-bottom shadow-sm",
+      # Marca + métricas
       htmltools::tags$div(
-        class = "d-flex align-items-center",
+        class = "d-flex align-items-center gap-3",
         htmltools::tags$span(
-          class = "brand-text me-4",
-          htmltools::tags$span(class = "brand-dark", "data"),
-          htmltools::tags$span(class = "brand-blue", "flowR")
+          class = "df-brand",
+          htmltools::tags$span(class = "df-brand-dark", "data"),
+          htmltools::tags$span(class = "df-brand-blue", "flowR")
         ),
-        # Badges métricas
         shiny::uiOutput("metricas_topo", inline = TRUE)
       ),
+      # Botões do lado direito
       htmltools::tags$div(
-        class = "d-flex align-items-center",
-        shiny::actionButton("btn_ver_codigo", "Código & Linhagem", class = "btn btn-outline-primary toolbar-btn me-2 fw-semibold", icon = shiny::icon("code")),
-        shiny::actionButton("btn_desfazer", "Desfazer Última", class = "btn btn-outline-secondary toolbar-btn me-2", icon = shiny::icon("rotate-left")),
-        shiny::actionButton("btn_cancelar", "Cancelar", class = "btn btn-light toolbar-btn me-2 text-secondary"),
-        shiny::actionButton("btn_concluir", "Concluir e Retornar", class = "btn btn-primary toolbar-btn fw-bold px-3", icon = shiny::icon("check"))
+        class = "d-flex align-items-center flex-wrap",
+        shiny::actionButton("btn_ver_codigo",  "Código & Linhagem",
+          class = "btn btn-outline-primary toolbar-btn fw-semibold",
+          icon  = shiny::icon("code")),
+        shiny::actionButton("btn_expandir",    NULL,
+          class = "btn btn-outline-secondary toolbar-btn",
+          title = "Abrir em tela cheia no navegador",
+          icon  = shiny::icon("up-right-and-down-left-from-center")),
+        shiny::actionButton("btn_desfazer",    "Desfazer",
+          class = "btn btn-outline-secondary toolbar-btn",
+          icon  = shiny::icon("rotate-left")),
+        shiny::actionButton("btn_cancelar",    "Cancelar",
+          class = "btn btn-light toolbar-btn text-secondary"),
+        shiny::actionButton("btn_concluir",    "Concluir",
+          class = "btn btn-primary toolbar-btn fw-bold px-3",
+          icon  = shiny::icon("check"))
       )
     ),
 
-    # 2. Barra de Ferramentas / Módulos de Engenharia
+    # ── 2. Barra de Ferramentas de Engenharia ───────────────────────────────
     htmltools::tags$div(
       class = "d-flex flex-wrap align-items-center px-3 mb-2",
-      shiny::actionButton("btn_modal_na", "Tratar NAs", class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("bandage")),
-      shiny::actionButton("btn_modal_datas", "Fragmentar Datas", class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("calendar-days")),
-      shiny::actionButton("btn_modal_filtro", "Filtrar Linhas", class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("filter")),
-      shiny::actionButton("btn_modal_sentinela", "Substituir Sentinelas", class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("arrows-rotate")),
-      shiny::actionButton("btn_modal_nova_col", "Nova Coluna", class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("plus")),
-      shiny::actionButton("btn_modal_renomear", "Renomear / Tipagem", class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("tag")),
-      shiny::actionButton("btn_modal_excluir_col", "Excluir Colunas", class = "btn btn-outline-danger toolbar-btn bg-white", icon = shiny::icon("trash-can"))
+      shiny::actionButton("btn_modal_na",          "Tratar NAs",
+        class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("bandage")),
+      shiny::actionButton("btn_modal_datas",        "Fragmentar Datas",
+        class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("calendar-days")),
+      shiny::actionButton("btn_modal_filtro",       "Filtrar Linhas",
+        class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("filter")),
+      shiny::actionButton("btn_modal_sentinela",    "Substituir Sentinelas",
+        class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("arrows-rotate")),
+      shiny::actionButton("btn_modal_nova_col",     "Nova Coluna",
+        class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("plus")),
+      shiny::actionButton("btn_modal_renomear",     "Renomear / Tipagem",
+        class = "btn btn-outline-dark toolbar-btn bg-white", icon = shiny::icon("tag")),
+      shiny::actionButton("btn_modal_excluir_col",  "Excluir Colunas",
+        class = "btn btn-outline-danger toolbar-btn bg-white", icon = shiny::icon("trash-can"))
     ),
 
-    # 3. Planilha Handsontable Central
+    # ── 3. Planilha Handsontable ─────────────────────────────────────────────
     htmltools::tags$div(
-      class = "grid-card mx-3 mb-3 flex-grow-1",
+      class = "grid-card mx-3 mb-3",
       rhandsontable::rHandsontableOutput("tabela_dados", height = "560px")
     )
   )

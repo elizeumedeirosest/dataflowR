@@ -22,24 +22,51 @@ criar_server_dataflow <- function(dados_iniciais, nome_objeto_original = "dados"
       dim_original = list(linhas = nrow(dados_iniciais), colunas = ncol(dados_iniciais))
     )
 
-    # 1. Renderização das Métricas no Cabeçalho
+    # Métrica: format sem big.mark problemático
     output$metricas_topo <- shiny::renderUI({
-      d <- valores$dados
+      d    <- valores$dados
       n_na <- sum(is.na(d))
       n_ops <- length(valores$operacoes)
 
       htmltools::tagList(
-        htmltools::tags$span(class = "metric-badge", "Linhas: ", htmltools::tags$span(class = "metric-val", format(nrow(d), big.mark = "."))),
-        htmltools::tags$span(class = "metric-badge", "Colunas: ", htmltools::tags$span(class = "metric-val", ncol(d))),
-        htmltools::tags$span(class = "metric-badge", "Ausentes (NA): ", htmltools::tags$span(class = if (n_na > 0) "text-danger fw-bold" else "text-success fw-bold", n_na)),
-        htmltools::tags$span(class = "metric-badge", "Etapas: ", htmltools::tags$span(class = "metric-val", n_ops))
+        htmltools::tags$span(class = "metric-badge", "Linhas: ",
+          htmltools::tags$span(class = "metric-val", as.character(nrow(d)))),
+        htmltools::tags$span(class = "metric-badge", "Colunas: ",
+          htmltools::tags$span(class = "metric-val", ncol(d))),
+        htmltools::tags$span(class = "metric-badge", "NAs: ",
+          htmltools::tags$span(class = if (n_na > 0) "text-danger fw-bold" else "text-success fw-bold", n_na)),
+        htmltools::tags$span(class = "metric-badge", "Etapas: ",
+          htmltools::tags$span(class = "metric-val", n_ops))
       )
     })
 
-    # 2. Renderização da Planilha rhandsontable
+    # 2. Renderização da Planilha rhandsontable (sem warnings no console)
     output$tabela_dados <- rhandsontable::renderRHandsontable({
-      criar_tabela_interativa(valores$dados, altura = 550)
+      suppressWarnings(criar_tabela_interativa(valores$dados, altura = 550))
     })
+
+    # Renomear coluna via duplo clique no cabeçalho (enviado pelo JS)
+    shiny::observeEvent(input$renomear_header_col, {
+      info <- input$renomear_header_col
+      if (is.null(info) || !nzchar(info$novo_nome)) return()
+
+      nome_atual <- info$nome_atual
+      novo_nome  <- info$novo_nome
+
+      # Confirma que o nome_atual existe
+      if (!nome_atual %in% names(valores$dados)) return()
+
+      res <- renomear_coluna(valores$dados, nome_atual, novo_nome)
+      if (!is.null(res) && !is.null(res$operacao)) {
+        valores$historico_dados <- c(valores$historico_dados, list(valores$dados))
+        valores$dados <- res$dados
+        valores$operacoes <- c(valores$operacoes, list(res$operacao))
+        shiny::showNotification(
+          paste0("Coluna '", nome_atual, "' renomeada para '", novo_nome, "'."),
+          type = "message", duration = 3
+        )
+      }
+    }, ignoreNULL = TRUE)
 
     # Captura edições diretas na tabela se o usuário clicar em Concluir ou alterar células
     shiny::observe({
@@ -594,6 +621,13 @@ criar_server_dataflow <- function(dados_iniciais, nome_objeto_original = "dados"
           )
         )
       ))
+    })
+
+    # =========================================================================
+    # EXPANDIR: Reabrir no navegador (tela cheia)
+    # =========================================================================
+    shiny::observeEvent(input$btn_expandir, {
+      shiny::stopApp("__expandir_navegador__")
     })
 
     # =========================================================================
