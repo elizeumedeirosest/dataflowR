@@ -1,11 +1,11 @@
-Package: dataflow
-Title: Interface Visual, Engenharia de Atributos e Linhagem Reprodutível de Dados
+Package: dataflowR
+Title: Interface Visual, Engenharia de Atributos e Linhagem Reprodutivel de Dados
 Version: 0.1.0
 Authors@R: person("Elizeu", "Medeiros", email = "elizeumedeirosest@gmail.com", role = c("aut", "cre"))
-Description: Fornece uma interface gráfica interativa para visualização, edição direta
-    em planilha, filtragem e engenharia de dados em R. Gera código 'dplyr' reproduzível
-    e comentado em português, registrando a linhagem completa das transformações para
-    auditoria e geração de fluxogramas.
+Description: Fornece uma interface grafica interativa para visualizacao, edicao direta
+    em planilha, filtragem e engenharia de dados em R. Gera codigo 'dplyr' reproduzivel
+    e comentado em portugues, registrando a linhagem completa das transformacoes para
+    auditoria e geracao de fluxogramas.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

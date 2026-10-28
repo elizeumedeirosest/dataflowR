@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" width="340" height="80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 90" width="370" height="80">
   <style>
     .t-black {
       fill: #0f172a;
@@ -19,6 +19,6 @@
     }
   </style>
   <text x="50%" y="68" text-anchor="middle">
-    <tspan class="t-black">data</tspan><tspan class="t-blue">flow</tspan>
+    <tspan class="t-black">data</tspan><tspan class="t-blue">flowR</tspan>
   </text>
 </svg>
