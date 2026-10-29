@@ -6,12 +6,13 @@
 #' @param dados Um \code{data.frame}, \code{tibble} ou matriz a ser editada.
 #' @param viewer Tipo de visualizador do Shiny Gadget:
 #'   \itemize{
-#'     \item \code{"dialog"}: Janela modal independente no RStudio (padrão).
-#'     \item \code{"browser"}: Abre em aba do navegador web.
+#'     \item \code{"window"}: Janela desktop nativa do sistema operacional com botões nativos de minimizar, maximizar e fechar (padrão).
+#'     \item \code{"browser"}: Abre em aba do navegador web padrão.
+#'     \item \code{"dialog"}: Janela modal interna do RStudio.
 #'     \item \code{"pane"}: Painel Viewer do RStudio.
 #'   }
-#' @param largura Largura da janela modal em pixels (quando viewer = "dialog"). Padrão: 1200.
-#' @param altura Altura da janela modal em pixels (quando viewer = "dialog"). Padrão: 750.
+#' @param largura Largura da janela modal em pixels (quando viewer = "dialog" ou "window"). Padrão: 1200.
+#' @param altura Altura da janela modal em pixels (quando viewer = "dialog" ou "window"). Padrão: 750.
 #'
 #' @return Retorna um objeto da classe \code{dataflow} (herdando de \code{data.frame})
 #'   contendo os dados processados e os atributos de linhagem e código reproduzível.
@@ -29,7 +30,7 @@
 #' resumo_dataflow(dados_limpos)
 #' }
 dataflow <- function(dados,
-                     viewer = c("dialog", "browser", "pane"),
+                     viewer = c("window", "browser", "dialog", "pane"),
                      largura = 1200,
                      altura = 750) {
   if (missing(dados) || is.null(dados)) {
@@ -46,9 +47,10 @@ dataflow <- function(dados,
   # Configura o tipo de visualizador do gadget
   gadget_viewer <- switch(
     viewer,
-    "dialog" = shiny::dialogViewer("dataflowR - Editor Visual de Dados", width = largura, height = altura),
+    "window"  = criar_viewer_janela(largura = largura, altura = altura),
     "browser" = shiny::browserViewer(),
-    "pane" = shiny::paneViewer()
+    "dialog"  = shiny::dialogViewer("dataflowR - Editor Visual de Dados", width = largura, height = altura),
+    "pane"    = shiny::paneViewer()
   )
 
   ui     <- criar_ui_dataflow()
@@ -59,14 +61,6 @@ dataflow <- function(dados,
     shiny::runGadget(ui, server, viewer = gadget_viewer, stopOnCancel = FALSE)
   )
 
-  # Se o usuário clicou em "Expandir" → reabre em tela cheia no navegador
-  if (identical(resultado, "__expandir_navegador__")) {
-    cli::cli_alert_info("Reabrindo em tela cheia no navegador...")
-    resultado <- suppressWarnings(
-      shiny::runGadget(ui, server, viewer = shiny::browserViewer(), stopOnCancel = FALSE)
-    )
-  }
-
   if (is.null(resultado)) {
     cli::cli_alert_info("Edição cancelada pelo usuário. Os dados não foram modificados.")
     return(invisible(dados))
@@ -74,6 +68,46 @@ dataflow <- function(dados,
 
   cli::cli_alert_success("Dados processados com sucesso!")
   resultado
+}
+
+#' Criar Viewer de Janela Nativa Desktop
+#'
+#' Lança a aplicação como uma janela independente do sistema operacional (Chromium App Mode),
+#' fornecendo moldura nativa com botões de minimizar, maximizar e fechar.
+#'
+#' @param largura Largura inicial da janela.
+#' @param altura Altura inicial da janela.
+#' @return Função compatível com viewer do Shiny.
+#' @keywords internal
+criar_viewer_janela <- function(largura = 1200, altura = 750) {
+  # Localiza navegadores baseados em Chromium para modo App Window nativo
+  candidatos <- c(
+    "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+    file.path(Sys.getenv("LOCALAPPDATA"), "Google/Chrome/Application/chrome.exe")
+  )
+
+  app_bin <- NULL
+  for (cand in candidatos) {
+    if (file.exists(cand)) {
+      app_bin <- cand
+      break
+    }
+  }
+
+  if (!is.null(app_bin)) {
+    shiny::browserViewer(browser = function(url) {
+      args <- c(
+        paste0("--app=", url),
+        paste0("--window-size=", largura, ",", altura)
+      )
+      system2(app_bin, args = args, wait = FALSE)
+    })
+  } else {
+    shiny::browserViewer()
+  }
 }
 
 #' @title Addin do RStudio para o dataflowR
@@ -121,7 +155,7 @@ dataflow_addin <- function() {
     nome_alvo <- "mtcars"
   }
 
-  dados_tratados <- dataflow(dados_alvo, viewer = "dialog")
+  dados_tratados <- dataflow(dados_alvo, viewer = "window")
 
   if (!is.null(dados_tratados) && inherits(dados_tratados, "dataflow")) {
     nome_saida <- paste0(nome_alvo, "_tratado")

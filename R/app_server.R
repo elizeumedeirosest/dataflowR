@@ -624,13 +624,6 @@ criar_server_dataflow <- function(dados_iniciais, nome_objeto_original = "dados"
     })
 
     # =========================================================================
-    # EXPANDIR: Reabrir no navegador (tela cheia)
-    # =========================================================================
-    shiny::observeEvent(input$btn_expandir, {
-      shiny::stopApp("__expandir_navegador__")
-    })
-
-    # =========================================================================
     # CONCLUIR / CANCELAR
     # =========================================================================
     shiny::observeEvent(input$btn_cancelar, {

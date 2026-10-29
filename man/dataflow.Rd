@@ -6,7 +6,7 @@
 \usage{
 dataflow(
   dados,
-  viewer = c("dialog", "browser", "pane"),
+  viewer = c("window", "browser", "dialog", "pane"),
   largura = 1200,
   altura = 750
 )
@@ -16,14 +16,15 @@ dataflow(
 
 \item{viewer}{Tipo de visualizador do Shiny Gadget:
 \itemize{
-\item \code{"dialog"}: Janela modal independente no RStudio (padrão).
-\item \code{"browser"}: Abre em aba do navegador web.
+\item \code{"window"}: Janela desktop nativa do sistema operacional com botões nativos de minimizar, maximizar e fechar (padrão).
+\item \code{"browser"}: Abre em aba do navegador web padrão.
+\item \code{"dialog"}: Janela modal interna do RStudio.
 \item \code{"pane"}: Painel Viewer do RStudio.
 }}
 
-\item{largura}{Largura da janela modal em pixels (quando viewer = "dialog"). Padrão: 1200.}
+\item{largura}{Largura da janela modal em pixels (quando viewer = "dialog" ou "window"). Padrão: 1200.}
 
-\item{altura}{Altura da janela modal em pixels (quando viewer = "dialog"). Padrão: 750.}
+\item{altura}{Altura da janela modal em pixels (quando viewer = "dialog" ou "window"). Padrão: 750.}
 }
 \value{
 Retorna um objeto da classe \code{dataflow} (herdando de \code{data.frame})

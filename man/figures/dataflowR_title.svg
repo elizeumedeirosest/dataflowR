@@ -1,13 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 90" width="370" height="80">
   <style>
-    .t-black {
+    .t-data {
       fill: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif;
       font-weight: 800;
       font-size: 72px;
       letter-spacing: -2px;
     }
-    .t-blue {
+    .t-flow {
+      fill: #475569;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif;
+      font-weight: 800;
+      font-size: 72px;
+      letter-spacing: -2px;
+    }
+    .t-r {
       fill: #0071e3;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif;
       font-weight: 800;
@@ -15,10 +22,12 @@
       letter-spacing: -2px;
     }
     @media (prefers-color-scheme: dark) {
-      .t-black { fill: #f8fafc; }
+      .t-data { fill: #f8fafc; }
+      .t-flow { fill: #94a3b8; }
+      .t-r    { fill: #0071e3; }
     }
   </style>
   <text x="50%" y="68" text-anchor="middle">
-    <tspan class="t-black">data</tspan><tspan class="t-blue">flowR</tspan>
+    <tspan class="t-data">data</tspan><tspan class="t-flow">flow</tspan><tspan class="t-r">R</tspan>
   </text>
 </svg>

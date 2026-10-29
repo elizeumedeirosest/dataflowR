@@ -44,6 +44,17 @@ criar_ui_dataflow <- function() {
             }, 2500);
           });
         }
+
+        // Alternar modo tela cheia nativo (Maximizar janela inteira)
+        function alternarTelaCheia() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function(err) {});
+          } else {
+            if (document.exitFullscreen) {
+              document.exitFullscreen();
+            }
+          }
+        }
       ")),
       # Duplo clique no cabeçalho da coluna → renomear (event delegation)
       htmltools::tags$script(htmltools::HTML("
@@ -69,8 +80,9 @@ criar_ui_dataflow <- function() {
 
         /* ─ Marca ─ */
         .df-brand { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.6px; line-height: 1; white-space: nowrap; }
-        .df-brand-dark { color: #0f172a; }
-        .df-brand-blue { color: #0071e3; }
+        .df-brand-data { color: #0f172a; }
+        .df-brand-flow { color: #475569; }
+        .df-brand-r    { color: #0071e3; }
 
         /* ─ Métricas ─ */
         .metric-badge {
@@ -134,8 +146,9 @@ criar_ui_dataflow <- function() {
         class = "d-flex align-items-center gap-3",
         htmltools::tags$span(
           class = "df-brand",
-          htmltools::tags$span(class = "df-brand-dark", "data"),
-          htmltools::tags$span(class = "df-brand-blue", "flowR")
+          htmltools::tags$span(class = "df-brand-data", "data"),
+          htmltools::tags$span(class = "df-brand-flow", "flow"),
+          htmltools::tags$span(class = "df-brand-r", "R")
         ),
         shiny::uiOutput("metricas_topo", inline = TRUE)
       ),
@@ -145,10 +158,13 @@ criar_ui_dataflow <- function() {
         shiny::actionButton("btn_ver_codigo",  "Código & Linhagem",
           class = "btn btn-outline-primary toolbar-btn fw-semibold",
           icon  = shiny::icon("code")),
-        shiny::actionButton("btn_expandir",    NULL,
-          class = "btn btn-outline-secondary toolbar-btn",
-          title = "Abrir em tela cheia no navegador",
-          icon  = shiny::icon("up-right-and-down-left-from-center")),
+        htmltools::tags$button(
+          type    = "button",
+          class   = "btn btn-outline-secondary toolbar-btn",
+          title   = "Maximizar / Alternar Tela Cheia",
+          onclick = "alternarTelaCheia();",
+          htmltools::tagList(shiny::icon("up-right-and-down-left-from-center"))
+        ),
         shiny::actionButton("btn_desfazer",    "Desfazer",
           class = "btn btn-outline-secondary toolbar-btn",
           icon  = shiny::icon("rotate-left")),
